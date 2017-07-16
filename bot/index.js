@@ -26,17 +26,33 @@ function elicitSlot(sessionAttributes, intentName, slots, slotToElicit, message)
     };
 }
 
-function close(sessionAttributes, fulfillmentState, message) {
-    console.log('ok here too');
+function closeWithResponse(sessionAttributes, fulfillmentState, message, responseCard) {
+
     var returnval = {
         sessionAttributes,
         dialogAction: {
             type: 'Close',
-           fulfillmentState: fulfillmentState,
+            fulfillmentState: fulfillmentState,
+            message: message,
+            responseCard: responseCard
+        }
+    };
+
+    console.log('%j',returnval);
+    return returnval;
+}
+
+function close(sessionAttributes, fulfillmentState, message) {
+
+    var returnval = {
+        sessionAttributes,
+        dialogAction: {
+            type: 'Close',
+            fulfillmentState: fulfillmentState,
             message: message,
         }
     };
-    console.log('%j', returnval);
+
     return returnval;
 }
 
@@ -176,6 +192,192 @@ function dispatch(intentRequest, callback) {
     throw new Error(`Intent with name ${intentName} not supported`);
 }
 
+
+function doAddToList(event, callback) {
+
+    if (event.sessionAttributes.sessionObject) {
+        var sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+        if (sessionObject.currentSession) {
+            var currentSession = sessionObject.currentSession;
+            if (sessionObject.lists) {
+
+                var found = false;
+                sessionObject.lists.forEach(function (element) {
+                    if (element.name == currentSession) {
+                        found = true;
+                        element.listItems.push(event.currentIntent.slots.ListItem);
+                    }
+                });
+                if (!found) {
+                    var list = {};
+                    list.name = currentSession;
+                    list.listItems = [];
+                    list.listItems.push(event.currentIntent.slots.ListItem);
+                    sessionObject.lists.push(list);
+                }
+            } else {
+                sessionObject.lists = [];
+                var list = {};
+                list.name = currentSession;
+                list.listItems = [];
+                list.listItems.push(event.currentIntent.slots.ListItem);
+                sessionObject.lists.push(list);
+
+            }
+            var sessionAttributes = event.sessionAttributes;
+            sessionAttributes.sessionObject = JSON.stringify(sessionObject);
+            console.log('%j', sessionAttributes);
+            callback(null, close(sessionAttributes, 'Fulfilled', {
+                contentType: 'PlainText',
+                content: "Item Added !!"
+            }));
+
+        } else {
+            callback(null, close(event.sessionAttributes, 'Fulfilled', {
+                contentType: 'PlainText',
+                content: "No list selected to add the item to!!"
+            }));
+        }
+
+    } else {
+        callback(null, close(event.sessionAttributes, 'Fulfilled', {
+            contentType: 'PlainText',
+            content: "No list selected to add the item to!!"
+        }));
+    }
+}
+
+function doCreateList(event, callback) {
+
+    var listName = event.currentIntent.slots.ListName;
+    var sessionObject = {};
+    if (event.sessionAttributes.sessionObject) {
+        sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+    }
+    if (sessionObject.lists) {
+
+        var found = false;
+        sessionObject.lists.forEach(function (element) {
+            if (element.name == listName) {
+                found = true;
+            }
+        });
+        console.log(found);
+        if (found) {
+            sessionObject.currentSession = listName;
+        } else {
+            var list = {};
+            list.name = listName;
+            sessionObject.currentSession = listName;
+            list.listItems = [];
+            sessionObject.lists.push(list);
+        }
+
+
+
+    } else {
+        sessionObject.lists = [];
+        var list = {};
+        list.name = listName;
+        sessionObject.currentSession = listName;
+        list.listItems = [];
+        sessionObject.lists.push(list);
+
+    }
+    var sessionAttributes = event.sessionAttributes;
+    sessionAttributes.sessionObject = JSON.stringify(sessionObject);
+    console.log('%j', sessionAttributes);
+    callback(null, close(sessionAttributes, 'Fulfilled', {
+        contentType: 'PlainText',
+        content: listName + " loaded!!"
+    }));
+
+
+}
+
+function doEndList(event, callback) {
+
+}
+
+function doLoadList(event, callback) {
+    var listToBeLoaded = event.currentIntent.slots.EList;
+    console.log("List to be loaded " + listToBeLoaded);
+
+    var sessionObject = {};
+    if (event.sessionAttributes.sessionObject) {
+        sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+    }
+
+    var currentSession = '';
+    if (sessionObject.currentSession) {
+
+        currentSession = sessionObject.currentSession;
+        console.log(" Changing from list " + currentSession + " to " + listToBeLoaded);
+        sessionObject.currentSession = listToBeLoaded;
+        currentSession = listToBeLoaded;
+    } else {
+        sessionObject.currentSession = listToBeLoaded;
+        currentSession = listToBeLoaded;
+    }
+    if (sessionObject.lists) {
+
+        var found = false;
+        sessionObject.lists.forEach(function (element) {
+            if (element.name == listToBeLoaded) {
+                sessionObject.currentSession = listToBeLoaded;
+                sessionObject.currentIndex = 0;
+                var sessionAttributes = event.sessionAttributes;
+                sessionAttributes.sessionObject = JSON.stringify(sessionObject);
+                console.log('%j', sessionAttributes);
+                callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+                    contentType: 'PlainText',
+                    content: listToBeLoaded + " loaded!!"
+                }, {
+                    contentType: "application/vnd.amazonaws.card.generic",
+                    genericAttachments: [{
+                        title: "card-title",
+                        subTitle: "card-sub-title",
+                        buttons: [{
+                            "text": "Next Steps",
+                            "value": "Next Steps"
+                        }]
+                    }]
+                }));
+                return;
+
+
+            }
+        });
+        console.log(found);
+        if (!found) {
+            var list = {};
+            list.name = currentSession;
+            list.listItems = [];
+            sessionObject.lists.push(list);
+
+        }
+
+
+
+    } else {
+        sessionObject.lists = [];
+        var list = {};
+        list.name = currentSession;
+        list.listItems = [];
+        sessionObject.lists.push(list);
+
+    }
+    var sessionAttributes = event.sessionAttributes;
+    sessionAttributes.sessionObject = JSON.stringify(sessionObject);
+    console.log('%j', sessionAttributes);
+    callback(null, close(sessionAttributes, 'Fulfilled', {
+        contentType: 'PlainText',
+        content: listToBeLoaded + " loaded!!"
+    }));
+
+
+}
+
 // --------------- Main handler -----------------------
 
 // Route the incoming request based on intent.
@@ -184,12 +386,12 @@ exports.handler = (event, context, callback) => {
     try {
         // By default, treat the user request as coming from the America/New_York time zone.
         process.env.TZ = 'America/New_York';
-        console.log('%j',event);
+        console.log('%j', event);
 
-        switch(event.currentIntent.name){
-            case 'AddToList':
+        switch (event.currentIntent.name) {
+            case 'AddtoList':
                 console.log('Entering add to list');
-                doAddToList(event,callback);
+                doAddToList(event, callback);
                 break;
             case 'CreateListIntent':
                 console.log('Entering createlist intent');
@@ -197,37 +399,31 @@ exports.handler = (event, context, callback) => {
                 break;
             case 'EndList':
                 console.log('Endling the list');
-                doEndList(event,callback);
+                doEndList(event, callback);
                 break;
             case 'LoadList':
                 console.log('Loading the list');
-                doLoadList(event,callback);
+                doLoadList(event, callback);
                 break;
+            default:
+                callback(null, close(event.sessionAttributes, 'Fulfilled', {
+                    contentType: 'PlainText',
+                    content: "Could not understand the intent"
+                }));
+                break;
+
+
+
         }
-
-
-
-        /**
-         * Uncomment this if statement and populate with your Lex bot name and / or version as
-         * a sanity check to prevent invoking this Lambda function from an undesired Lex bot or
-         * bot version.
-         */
-        /*
-        if (event.bot.name !== 'OrderFlowers') {
-             callback('Invalid Bot Name');
-        }
-        */
-
-        console.log('Ok here');
-
-        callback(null,close(event.sessionAttributes, 'Fulfilled', {
-            contentType: 'PlainText', content: "All Ok"
+        callback(null, close(event.sessionAttributes, 'Fulfilled', {
+            contentType: 'PlainText',
+            content: "All Ok"
         }));
 
-       // dispatch(event, (response) => callback(null, response));
+        // dispatch(event, (response) => callback(null, response));
     } catch (err) {
-        context.fail(JSON.stringify(err));
-       // console.log('%j',err);
-       // callback(err);
+
+        console.log('%j', err);
+        callback(err);
     }
 };
