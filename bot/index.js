@@ -27,14 +27,17 @@ function elicitSlot(sessionAttributes, intentName, slots, slotToElicit, message)
 }
 
 function close(sessionAttributes, fulfillmentState, message) {
-    return {
+    console.log('ok here too');
+    var returnval = {
         sessionAttributes,
         dialogAction: {
             type: 'Close',
-            fulfillmentState,
-            message,
-        },
+           fulfillmentState: fulfillmentState,
+            message: message,
+        }
     };
+    console.log('%j', returnval);
+    return returnval;
 }
 
 function delegate(sessionAttributes, slots) {
@@ -181,7 +184,26 @@ exports.handler = (event, context, callback) => {
     try {
         // By default, treat the user request as coming from the America/New_York time zone.
         process.env.TZ = 'America/New_York';
-        console.log(`event.bot.name=${event.bot.name}`);
+        console.log('%j',event);
+
+        switch(event.currentIntent.name){
+            case 'AddToList':
+                console.log('Entering add to list');
+                doAddToList(event,callback);
+                break;
+            case 'CreateListIntent':
+                console.log('Entering createlist intent');
+                doCreateList(event, callback);
+                break;
+            case 'EndList':
+                console.log('Endling the list');
+                doEndList(event,callback);
+                break;
+            case 'LoadList':
+                console.log('Loading the list');
+                doLoadList(event,callback);
+                break;
+        }
 
 
 
@@ -196,14 +218,16 @@ exports.handler = (event, context, callback) => {
         }
         */
 
+        console.log('Ok here');
 
-        callback(close(event.sessionAttributes, 'Fulfilled', {
-            contentType: 'PlainText',
-            content: `Thanks, your order for ${flowerType} has been placed and will be ready for pickup by ${time} on ${date}`
+        callback(null,close(event.sessionAttributes, 'Fulfilled', {
+            contentType: 'PlainText', content: "All Ok"
         }));
 
        // dispatch(event, (response) => callback(null, response));
     } catch (err) {
-        callback(err);
+        context.fail(JSON.stringify(err));
+       // console.log('%j',err);
+       // callback(err);
     }
 };
