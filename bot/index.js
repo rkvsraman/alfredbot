@@ -1,5 +1,11 @@
 'use strict';
 
+var AWS = require("aws-sdk");
+
+AWS.config.update({
+    region: "us-east-1"
+});
+
 /**
  * This sample demonstrates an implementation of the Lex Code Hook Interface
  * in order to serve a sample bot which manages orders for flowers.
@@ -38,11 +44,34 @@ function elicitSlotWithResponse(sessionAttributes, intentName, slots, slotToElic
             responseCard
         },
     };
-    console.log('%j',returnval);
+    console.log('%j', returnval);
     return returnval;
 }
 
-function closeWithResponse(sessionAttributes, fulfillmentState, message, responseCard) {
+function closeWithResponse(event, store, sessionAttributes, fulfillmentState, message, responseCard) {
+
+    if (store) {
+        var docClient = new AWS.DynamoDB.DocumentClient();
+        var params = {
+            TableName: "AlfredBot",
+            Item: {
+                "userID": event.userId,
+                "info": sessionAttributes.sessionObject
+            }
+        }
+        console.log("Adding a new item...");
+        docClient.put(params, function (err, data) {
+            if (err) {
+                console.error("Unable to add item. Error JSON:", JSON.stringify(err, null, 2));
+
+            } else {
+                console.log("Added item:", JSON.stringify(data, null, 2));
+
+            }
+
+
+        });
+    }
 
     var returnval = {
         sessionAttributes,
@@ -53,9 +82,10 @@ function closeWithResponse(sessionAttributes, fulfillmentState, message, respons
             responseCard: responseCard
         }
     };
-
     console.log('%j', returnval);
     return returnval;
+
+
 }
 
 function close(sessionAttributes, fulfillmentState, message) {
@@ -245,7 +275,7 @@ function doAddToList(event, callback) {
                 sessionAttributes = {};
             sessionAttributes.sessionObject = JSON.stringify(sessionObject);
             console.log('%j', sessionAttributes);
-            callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+            callback(null, closeWithResponse(event, true, sessionAttributes, 'Fulfilled', {
                 contentType: 'PlainText',
                 content: event.currentIntent.slots.ListItem + " added !!"
             }, {
@@ -322,9 +352,10 @@ function doCreateList(event, callback) {
     if (!sessionAttributes) {
         sessionAttributes = {};
     }
+
     sessionAttributes.sessionObject = JSON.stringify(sessionObject);
     console.log('%j', sessionAttributes);
-    callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+    callback(null, closeWithResponse(event, true, sessionAttributes, 'Fulfilled', {
         contentType: 'PlainText',
         content: listName + " loaded!!"
     }, {
@@ -356,7 +387,7 @@ function doEndList(event, callback) {
 
         sessionAttributes.sessionObject = JSON.stringify(sessionObject);
         console.log('%j', sessionAttributes);
-        callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+        callback(null, closeWithResponse(event, true, sessionAttributes, 'Fulfilled', {
             contentType: 'PlainText',
             content: sessionObject.currentSession + " list saved!!"
         }, {
@@ -376,7 +407,7 @@ function doEndList(event, callback) {
         return;
 
     }
-    callback(null, close(event.sessionAttributes, 'Fulfilled', {
+    callback(null, closeWithResponse(event, false, event.sessionAttributes, 'Fulfilled', {
         contentType: 'PlainText',
         content: "Could not find any list to save!!"
     }, {
@@ -418,7 +449,7 @@ function doNextItem(event, callback) {
                 var sessionAttributes = event.sessionAttributes;
                 sessionAttributes.sessionObject = JSON.stringify(sessionObject);
                 console.log('%j', sessionAttributes);
-                callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+                callback(null, closeWithResponse(event, true, sessionAttributes, 'Fulfilled', {
                     contentType: 'PlainText',
                     content: "Check: " + item
                 }, {
@@ -440,7 +471,7 @@ function doNextItem(event, callback) {
                 var sessionAttributes = event.sessionAttributes;
                 sessionAttributes.sessionObject = JSON.stringify(sessionObject);
                 console.log('%j', sessionAttributes);
-                callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+                callback(null, closeWithResponse(event, true, sessionAttributes, 'Fulfilled', {
                     contentType: 'PlainText',
                     content: "Done with this list!!"
                 }, {
@@ -487,7 +518,7 @@ function doLoadList(event, callback) {
         var buttonsList = [];
         if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
             sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
-            console.log('%j',sessionObject);
+            console.log('%j', sessionObject);
             if (sessionObject.lists) {
                 sessionObject.lists.forEach(function (element) {
 
@@ -554,7 +585,7 @@ function doLoadList(event, callback) {
                 var sessionAttributes = event.sessionAttributes;
                 sessionAttributes.sessionObject = JSON.stringify(sessionObject);
                 console.log('%j', sessionAttributes);
-                callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+                callback(null, closeWithResponse(event, true, sessionAttributes, 'Fulfilled', {
                     contentType: 'PlainText',
                     content: listToBeLoaded + " loaded!!"
                 }, {
@@ -600,7 +631,7 @@ function doLoadList(event, callback) {
         sessionAttributes = {};
     sessionAttributes.sessionObject = JSON.stringify(sessionObject);
     console.log('%j', sessionAttributes);
-    callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+    callback(null, closeWithResponse(event, true, sessionAttributes, 'Fulfilled', {
         contentType: 'PlainText',
         content: listToBeLoaded + " loaded!!"
     }, {
@@ -620,7 +651,7 @@ function doLoadList(event, callback) {
 
 function doGreeting(event, callback) {
 
-    callback(null, closeWithResponse(event.sessionAttributes, 'Fulfilled', {
+    callback(null, closeWithResponse(event, false, event.sessionAttributes, 'Fulfilled', {
         contentType: 'PlainText',
         content: "Hello, my name is Alfred, \n" +
             " I can help you with creating and maintaining task lists. \n" +
@@ -658,51 +689,128 @@ function doGreeting(event, callback) {
 
 // Route the incoming request based on intent.
 // The JSON body of the request is provided in the event slot.
-exports.handler = (event, context, callback) => {
+exports.handler = (event1, context, callback) => {
+    var event = event1;
     try {
         // By default, treat the user request as coming from the America/New_York time zone.
         process.env.TZ = 'America/New_York';
         console.log('%j', event);
 
-        switch (event.currentIntent.name) {
-            case 'AddtoList':
-                console.log('Entering add to list');
-                doAddToList(event, callback);
-                break;
-            case 'CreateListIntent':
-                console.log('Entering createlist intent');
-                doCreateList(event, callback);
-                break;
-            case 'EndList':
-                console.log('Endling the list');
-                doEndList(event, callback);
-                break;
-            case 'LoadList':
-                console.log('Loading the list');
-                doLoadList(event, callback);
-                break;
-            case 'NextItemOnList':
-                console.log('Next item on the list');
-                doNextItem(event, callback);
-                break;
-            case 'Hello':
-                console.log('In Hello');
-                doGreeting(event, callback);
-                break;
-            default:
+        if (event.sessionAttributes == undefined || event.sessionAttributes.sessionObject == undefined) {
+            var docClient = new AWS.DynamoDB.DocumentClient();
+            var params = {
+                TableName: "AlfredBot",
+                Key: {
+                    "userID": event.userId
+                }
+            }
+            docClient.get(params, function (err, data) {
+                if (err) {
+                    console.log("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+                } else {
+                    console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+                }
+                if (data && data.Item && data.Item.info) {
+                    console.log("Loading data from DB!!");
+                    var sessionObject = data.Item.info;
+                    if (event.sessionAttributes)
+                        event.sessionAttributes.sessionObject = sessionObject;
+                    else {
+                        event.sessionAttributes = {};
+                        event.sessionAttributes.sessionObject = sessionObject;
+                    }
+                }
+
+
+                switch (event.currentIntent.name) {
+                    case 'AddtoList':
+                        console.log('Entering add to list');
+                        doAddToList(event, callback);
+                        break;
+                    case 'CreateListIntent':
+                        console.log('Entering createlist intent');
+                        doCreateList(event, callback);
+                        break;
+                    case 'EndList':
+                        console.log('Endling the list');
+                        doEndList(event, callback);
+                        break;
+                    case 'LoadList':
+                        console.log('Loading the list');
+                        doLoadList(event, callback);
+                        break;
+                    case 'NextItemOnList':
+                        console.log('Next item on the list');
+                        doNextItem(event, callback);
+                        break;
+                    case 'Hello':
+                        console.log('In Hello');
+                        doGreeting(event, callback);
+                        break;
+                    default:
+                        callback(null, close(event.sessionAttributes, 'Fulfilled', {
+                            contentType: 'PlainText',
+                            content: "Could not understand the intent"
+                        }));
+                        break;
+
+
+
+                }
                 callback(null, close(event.sessionAttributes, 'Fulfilled', {
                     contentType: 'PlainText',
-                    content: "Could not understand the intent"
+                    content: "All Ok"
                 }));
-                break;
+            });
 
 
+
+
+
+
+        } else {
+            switch (event.currentIntent.name) {
+                case 'AddtoList':
+                    console.log('Entering add to list');
+                    doAddToList(event, callback);
+                    break;
+                case 'CreateListIntent':
+                    console.log('Entering createlist intent');
+                    doCreateList(event, callback);
+                    break;
+                case 'EndList':
+                    console.log('Endling the list');
+                    doEndList(event, callback);
+                    break;
+                case 'LoadList':
+                    console.log('Loading the list');
+                    doLoadList(event, callback);
+                    break;
+                case 'NextItemOnList':
+                    console.log('Next item on the list');
+                    doNextItem(event, callback);
+                    break;
+                case 'Hello':
+                    console.log('In Hello');
+                    doGreeting(event, callback);
+                    break;
+                default:
+                    callback(null, close(event.sessionAttributes, 'Fulfilled', {
+                        contentType: 'PlainText',
+                        content: "Could not understand the intent"
+                    }));
+                    break;
+
+
+
+            }
+            callback(null, close(event.sessionAttributes, 'Fulfilled', {
+                contentType: 'PlainText',
+                content: "All Ok"
+            }));
 
         }
-        callback(null, close(event.sessionAttributes, 'Fulfilled', {
-            contentType: 'PlainText',
-            content: "All Ok"
-        }));
+
 
         // dispatch(event, (response) => callback(null, response));
     } catch (err) {

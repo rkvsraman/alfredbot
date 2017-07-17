@@ -1,7 +1,7 @@
 BUCKET := alfredbot
 
 build:
-	rm alfredbot.zip && cd bot && yarn install && zip -r ../alfredbot.zip node_modules index.js package.json template.yaml
+	rm alfredbot.zip && cd bot && yarn install && zip -r ../alfredbot.zip  index.js package.json template.yaml
 
 lint:
 	cd bot && yarn && npm run lint
