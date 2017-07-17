@@ -235,12 +235,12 @@ function doAddToList(event, callback) {
             }, {
                 contentType: "application/vnd.amazonaws.card.generic",
                 genericAttachments: [{
-                     title: "card-title",
-                        subTitle: "card-sub-title",
+                    title: "Working list:" + sessionObject.currentSession,
+                    subTitle: "You could now...",
                     buttons: [{
                         "text": "Add more to the list?",
                         "value": "Add a new item to the list"
-                    },{
+                    }, {
                         "text": "Save list?",
                         "value": "Save the list"
                     }]
@@ -264,7 +264,8 @@ function doAddToList(event, callback) {
 
 function doCreateList(event, callback) {
 
-    var listName = event.currentIntent.slots.ListName;
+    var items_in_list = [];
+    var listName = event.currentIntent.slots.ListName.toLowerCase();
     var sessionObject = {};
     if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
@@ -275,6 +276,8 @@ function doCreateList(event, callback) {
         sessionObject.lists.forEach(function (element) {
             if (element.name == listName) {
                 found = true;
+                items_in_list = element.listItems;
+                sessionObject.currentIndex = 0;
             }
         });
         console.log(found);
@@ -300,13 +303,27 @@ function doCreateList(event, callback) {
 
     }
     var sessionAttributes = event.sessionAttributes;
-    if (!sessionAttributes)
+    if (!sessionAttributes) {
         sessionAttributes = {};
+    }
     sessionAttributes.sessionObject = JSON.stringify(sessionObject);
     console.log('%j', sessionAttributes);
-    callback(null, close(sessionAttributes, 'Fulfilled', {
+    callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
         contentType: 'PlainText',
         content: listName + " loaded!!"
+    }, {
+        contentType: "application/vnd.amazonaws.card.generic",
+        genericAttachments: [{
+            title: "Working list:" + listName,
+            subTitle: "Items: " + items_in_list.join(),
+            buttons: [{
+                "text": "Add more to the list?",
+                "value": "Add a new item to the list"
+            }, {
+                "text": "Run through this list one by one?",
+                "value": "Next Item on the list"
+            }]
+        }]
     }));
 
 
@@ -316,26 +333,111 @@ function doEndList(event, callback) {
 
     if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         var sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+
         if (sessionObject.currentSession)
-            sessionObject.currentSession = '';
+            sessionObject.currentIndex = 0;
         var sessionAttributes = event.sessionAttributes;
 
         sessionAttributes.sessionObject = JSON.stringify(sessionObject);
         console.log('%j', sessionAttributes);
-        callback(null, close(sessionAttributes, 'Fulfilled', {
+        callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
             contentType: 'PlainText',
             content: "List saved!!"
+        }, {
+            contentType: "application/vnd.amazonaws.card.generic",
+            genericAttachments: [{
+                title: "Saved list:" + sessionObject.currentSession,
+                subTitle: "What would you like to do next?",
+                buttons: [{
+                    "text": "Work on a new list?",
+                    "value": "Load a list"
+                }, {
+                    "text": "Run through the items in this list one by one?",
+                    "value": "Next Item on the list"
+                }]
+            }]
         }));
         return;
 
     }
     callback(null, close(event.sessionAttributes, 'Fulfilled', {
         contentType: 'PlainText',
-        content: "List saved!!"
+        content: "Could not find any list to save!!"
+    }, {
+        contentType: "application/vnd.amazonaws.card.generic",
+        genericAttachments: [{
+            title: "No active list!!",
+            subTitle: "Would you want to start one?",
+            buttons: [{
+                "text": "Start a new list?",
+                "value": "Load a list"
+            }]
+        }]
     }));
 }
 
 function doNextItem(event, callback) {
+
+
+    if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
+        var sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+        var sessionElement = null;
+        if (sessionObject.currentSession) {
+            var currentSession = sessionObject.currentSession;
+            if (sessionObject.lists) {
+
+
+                sessionObject.lists.forEach(function (element) {
+                    if (element.name == currentSession) {
+
+                        sessionElement = element;
+                    }
+                });
+
+            }
+            if (sessionObject.currentIndex != undefined && sessionElement && sessionElement.listItems && sessionElement.listItems.length > sessionObject.currentIndex) {
+                var item = sessionElement.listItems[sessionObject.currentIndex];
+                console.log("Current index:" + sessionObject.currentIndex);
+                sessionObject.currentIndex += 1;
+                var sessionAttributes = event.sessionAttributes;
+                sessionAttributes.sessionObject = JSON.stringify(sessionObject);
+                console.log('%j', sessionAttributes);
+                callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+                    contentType: 'PlainText',
+                    content: "Check: " + item
+                }, {
+                    contentType: "application/vnd.amazonaws.card.generic",
+                    genericAttachments: [{
+                        title: "Running thru the list.."+ sessionObject.currentSession,
+                        subTitle: "Item: "+ item,
+                        buttons: [{
+                            "text": "Jump to next item?",
+                            "value": "Next Item on the list"
+                        }, {
+                            "text": "Load some other list?",
+                            "value": "Load a list"
+                        }]
+                    }]
+                }));
+            }
+
+        } else {
+            callback(null, close(event.sessionAttributes, 'Fulfilled', {
+                contentType: 'PlainText',
+                content: "No list selected to add the item to!!"
+            }));
+        }
+
+    } else {
+        callback(null, close(event.sessionAttributes, 'Fulfilled', {
+            contentType: 'PlainText',
+            content: "No list selected to add the item to!!"
+        }));
+    }
+
+
+
+
 
 }
 
@@ -343,6 +445,7 @@ function doLoadList(event, callback) {
     var listToBeLoaded = event.currentIntent.slots.EList;
     console.log("List to be loaded " + listToBeLoaded);
 
+    var items_in_list = [];
     var sessionObject = {};
     if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
@@ -366,6 +469,7 @@ function doLoadList(event, callback) {
             if (element.name == listToBeLoaded) {
                 sessionObject.currentSession = listToBeLoaded;
                 sessionObject.currentIndex = 0;
+                items_in_list = element.listItems;
                 var sessionAttributes = event.sessionAttributes;
                 sessionAttributes.sessionObject = JSON.stringify(sessionObject);
                 console.log('%j', sessionAttributes);
@@ -375,11 +479,14 @@ function doLoadList(event, callback) {
                 }, {
                     contentType: "application/vnd.amazonaws.card.generic",
                     genericAttachments: [{
-                        title: "card-title",
-                        subTitle: "card-sub-title",
+                        title: "Working list:" + listToBeLoaded,
+                        subTitle: "Items: " + items_in_list.join(),
                         buttons: [{
-                            "text": "Next Steps",
-                            "value": "Next Steps"
+                            "text": "Add more to the list?",
+                            "value": "Add a new item to the list"
+                        }, {
+                            "text": "Run through this list one by one?",
+                            "value": "Next Item on the list"
                         }]
                     }]
                 }));
@@ -412,9 +519,19 @@ function doLoadList(event, callback) {
         sessionAttributes = {};
     sessionAttributes.sessionObject = JSON.stringify(sessionObject);
     console.log('%j', sessionAttributes);
-    callback(null, close(sessionAttributes, 'Fulfilled', {
+    callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
         contentType: 'PlainText',
         content: listToBeLoaded + " loaded!!"
+    }, {
+        contentType: "application/vnd.amazonaws.card.generic",
+        genericAttachments: [{
+            title: "Working list:" + listToBeLoaded,
+            subTitle: "No items in the list",
+            buttons: [{
+                "text": "Add some?",
+                "value": "Add a new item to the list"
+            }]
+        }]
     }));
 
 
@@ -448,7 +565,7 @@ exports.handler = (event, context, callback) => {
                 doLoadList(event, callback);
                 break;
             case 'NextItemOnList':
-                console.log('Loading the list');
+                console.log('Next item on the list');
                 doNextItem(event, callback);
                 break;
             default:
