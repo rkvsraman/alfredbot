@@ -26,6 +26,22 @@ function elicitSlot(sessionAttributes, intentName, slots, slotToElicit, message)
     };
 }
 
+function elicitSlotWithResponse(sessionAttributes, intentName, slots, slotToElicit, message, responseCard) {
+    var returnval = {
+        sessionAttributes,
+        dialogAction: {
+            type: 'ElicitSlot',
+            intentName,
+            slots,
+            slotToElicit,
+            message,
+            responseCard
+        },
+    };
+    console.log('%j',returnval);
+    return returnval;
+}
+
 function closeWithResponse(sessionAttributes, fulfillmentState, message, responseCard) {
 
     var returnval = {
@@ -231,7 +247,7 @@ function doAddToList(event, callback) {
             console.log('%j', sessionAttributes);
             callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
                 contentType: 'PlainText',
-                content: "Item Added !!"
+                content: event.currentIntent.slots.ListItem + " added !!"
             }, {
                 contentType: "application/vnd.amazonaws.card.generic",
                 genericAttachments: [{
@@ -342,7 +358,7 @@ function doEndList(event, callback) {
         console.log('%j', sessionAttributes);
         callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
             contentType: 'PlainText',
-            content: "List saved!!"
+            content: sessionObject.currentSession + " list saved!!"
         }, {
             contentType: "application/vnd.amazonaws.card.generic",
             genericAttachments: [{
@@ -408,8 +424,8 @@ function doNextItem(event, callback) {
                 }, {
                     contentType: "application/vnd.amazonaws.card.generic",
                     genericAttachments: [{
-                        title: "Running thru the list.."+ sessionObject.currentSession,
-                        subTitle: "Item: "+ item,
+                        title: "Running thru the list.." + sessionObject.currentSession,
+                        subTitle: "Item: " + item,
                         buttons: [{
                             "text": "Jump to next item?",
                             "value": "Next Item on the list"
@@ -419,6 +435,29 @@ function doNextItem(event, callback) {
                         }]
                     }]
                 }));
+            } else {
+                sessionObject.currentIndex = 0;
+                var sessionAttributes = event.sessionAttributes;
+                sessionAttributes.sessionObject = JSON.stringify(sessionObject);
+                console.log('%j', sessionAttributes);
+                callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
+                    contentType: 'PlainText',
+                    content: "Done with this list!!"
+                }, {
+                    contentType: "application/vnd.amazonaws.card.generic",
+                    genericAttachments: [{
+                        title: "What do we want to do next?",
+                        subTitle: "You could ...",
+                        buttons: [{
+                            "text": "Check again?",
+                            "value": "Next Item on the list"
+                        }, {
+                            "text": "Load some other list?",
+                            "value": "Load a list"
+                        }]
+                    }]
+                }));
+
             }
 
         } else {
@@ -442,6 +481,48 @@ function doNextItem(event, callback) {
 }
 
 function doLoadList(event, callback) {
+
+    if (event.invocationSource == "DialogCodeHook") {
+
+        var buttonsList = [];
+        if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
+            sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+            console.log('%j',sessionObject);
+            if (sessionObject.lists) {
+                sessionObject.lists.forEach(function (element) {
+
+                    var button = {};
+                    button.text = element.name;
+                    button.value = element.name;
+                    buttonsList.push(button);
+
+                });
+                callback(null, elicitSlotWithResponse(event.sessionAttributes, event.currentIntent.name, {
+                        "EList": "work"
+                    },
+                    "EList", {
+                        contentType: 'PlainText',
+                        content: "Listing existing lists..."
+                    }, {
+                        contentType: "application/vnd.amazonaws.card.generic",
+                        genericAttachments: [{
+                            title: "Available lists",
+                            subTitle: "Pick from...",
+                            buttons: buttonsList
+                        }]
+                    }
+
+                ));
+
+
+            }
+
+
+        }
+
+        return;
+
+    }
     var listToBeLoaded = event.currentIntent.slots.EList;
     console.log("List to be loaded " + listToBeLoaded);
 
@@ -537,6 +618,42 @@ function doLoadList(event, callback) {
 
 }
 
+function doGreeting(event, callback) {
+
+    callback(null, closeWithResponse(event.sessionAttributes, 'Fulfilled', {
+        contentType: 'PlainText',
+        content: "Hello, my name is Alfred, \n" +
+            " I can help you with creating and maintaining task lists. \n" +
+            "Some of the commands that I understand are...\n" +
+            "What can you do for me\n" +
+            "Create a new list\n" +
+            "Add a new item to the list" +
+            "Save the list\n" +
+            "Run through a list\n" +
+            "Next item\n" +
+            "You can also use following shortcuts."
+    }, {
+        contentType: "application/vnd.amazonaws.card.generic",
+        genericAttachments: [{
+            title: "Shortcuts",
+            subTitle: "Let's get you started... ",
+            buttons: [{
+                "text": "Create a list",
+                "value": "Create a new list"
+            }, {
+                "text": "Add a new item to the list",
+                "value": "Add a new item to the list"
+            }, {
+                "text": "Save the list",
+                "value": "Save the list"
+            }, {
+                "text": "Run through a list",
+                "value": "Run through a list"
+            }]
+        }]
+    }));
+}
+
 // --------------- Main handler -----------------------
 
 // Route the incoming request based on intent.
@@ -567,6 +684,10 @@ exports.handler = (event, context, callback) => {
             case 'NextItemOnList':
                 console.log('Next item on the list');
                 doNextItem(event, callback);
+                break;
+            case 'Hello':
+                console.log('In Hello');
+                doGreeting(event, callback);
                 break;
             default:
                 callback(null, close(event.sessionAttributes, 'Fulfilled', {
