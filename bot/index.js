@@ -482,7 +482,7 @@ function doNextItem(event, callback) {
 
 function doLoadList(event, callback) {
 
-    if (event.invocationSource == "DialogCodeHook") {
+    if (event.invocationSource == "DialogCodeHook" && !event.currentIntent.slots.EList) {
 
         var buttonsList = [];
         if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
@@ -498,7 +498,7 @@ function doLoadList(event, callback) {
 
                 });
                 callback(null, elicitSlotWithResponse(event.sessionAttributes, event.currentIntent.name, {
-                        "EList": "work"
+                        "EList": null
                     },
                     "EList", {
                         contentType: 'PlainText',
