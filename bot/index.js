@@ -229,9 +229,22 @@ function doAddToList(event, callback) {
                 sessionAttributes = {};
             sessionAttributes.sessionObject = JSON.stringify(sessionObject);
             console.log('%j', sessionAttributes);
-            callback(null, close(sessionAttributes, 'Fulfilled', {
+            callback(null, closeWithResponse(sessionAttributes, 'Fulfilled', {
                 contentType: 'PlainText',
                 content: "Item Added !!"
+            }, {
+                contentType: "application/vnd.amazonaws.card.generic",
+                genericAttachments: [{
+                     title: "card-title",
+                        subTitle: "card-sub-title",
+                    buttons: [{
+                        "text": "Add more to the list?",
+                        "value": "Add a new item to the list"
+                    },{
+                        "text": "Save list?",
+                        "value": "Save the list"
+                    }]
+                }]
             }));
 
         } else {
@@ -300,6 +313,29 @@ function doCreateList(event, callback) {
 }
 
 function doEndList(event, callback) {
+
+    if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
+        var sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+        if (sessionObject.currentSession)
+            sessionObject.currentSession = '';
+        var sessionAttributes = event.sessionAttributes;
+
+        sessionAttributes.sessionObject = JSON.stringify(sessionObject);
+        console.log('%j', sessionAttributes);
+        callback(null, close(sessionAttributes, 'Fulfilled', {
+            contentType: 'PlainText',
+            content: "List saved!!"
+        }));
+        return;
+
+    }
+    callback(null, close(event.sessionAttributes, 'Fulfilled', {
+        contentType: 'PlainText',
+        content: "List saved!!"
+    }));
+}
+
+function doNextItem(event, callback) {
 
 }
 
@@ -410,6 +446,10 @@ exports.handler = (event, context, callback) => {
             case 'LoadList':
                 console.log('Loading the list');
                 doLoadList(event, callback);
+                break;
+            case 'NextItemOnList':
+                console.log('Loading the list');
+                doNextItem(event, callback);
                 break;
             default:
                 callback(null, close(event.sessionAttributes, 'Fulfilled', {
