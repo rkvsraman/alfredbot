@@ -38,7 +38,7 @@ function closeWithResponse(sessionAttributes, fulfillmentState, message, respons
         }
     };
 
-    console.log('%j',returnval);
+    console.log('%j', returnval);
     return returnval;
 }
 
@@ -195,7 +195,7 @@ function dispatch(intentRequest, callback) {
 
 function doAddToList(event, callback) {
 
-    if (event.sessionAttributes.sessionObject) {
+    if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         var sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
         if (sessionObject.currentSession) {
             var currentSession = sessionObject.currentSession;
@@ -225,6 +225,8 @@ function doAddToList(event, callback) {
 
             }
             var sessionAttributes = event.sessionAttributes;
+            if (!sessionAttributes)
+                sessionAttributes = {};
             sessionAttributes.sessionObject = JSON.stringify(sessionObject);
             console.log('%j', sessionAttributes);
             callback(null, close(sessionAttributes, 'Fulfilled', {
@@ -251,7 +253,7 @@ function doCreateList(event, callback) {
 
     var listName = event.currentIntent.slots.ListName;
     var sessionObject = {};
-    if (event.sessionAttributes.sessionObject) {
+    if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
     }
     if (sessionObject.lists) {
@@ -285,6 +287,8 @@ function doCreateList(event, callback) {
 
     }
     var sessionAttributes = event.sessionAttributes;
+    if (!sessionAttributes)
+        sessionAttributes = {};
     sessionAttributes.sessionObject = JSON.stringify(sessionObject);
     console.log('%j', sessionAttributes);
     callback(null, close(sessionAttributes, 'Fulfilled', {
@@ -304,7 +308,7 @@ function doLoadList(event, callback) {
     console.log("List to be loaded " + listToBeLoaded);
 
     var sessionObject = {};
-    if (event.sessionAttributes.sessionObject) {
+    if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
     }
 
@@ -368,6 +372,8 @@ function doLoadList(event, callback) {
 
     }
     var sessionAttributes = event.sessionAttributes;
+    if (!sessionAttributes)
+        sessionAttributes = {};
     sessionAttributes.sessionObject = JSON.stringify(sessionObject);
     console.log('%j', sessionAttributes);
     callback(null, close(sessionAttributes, 'Fulfilled', {
