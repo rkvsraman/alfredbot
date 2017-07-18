@@ -159,10 +159,10 @@ function doAddToList(event, callback) {
                     title: "Working list:" + sessionObject.currentSession,
                     subTitle: "You could now...",
                     buttons: [{
-                        "text": "Add more to the list?",
+                        "text": "add more things",
                         "value": "Add a new item to the list"
                     }, {
-                        "text": "Save list?",
+                        "text": "save the list",
                         "value": "Save the list"
                     }]
                 }]
@@ -239,10 +239,10 @@ function doCreateList(event, callback) {
             title: "Working list:" + listName,
             subTitle: "Items: " + items_in_list.join(),
             buttons: [{
-                "text": "Add more to the list?",
+                "text": "add more things...",
                 "value": "Add a new item to the list"
             }, {
-                "text": "Run through this list one by one?",
+                "text": "use this checklist",
                 "value": "Next Item on the list"
             }]
         }]
@@ -271,10 +271,10 @@ function doEndList(event, callback) {
                 title: "Saved list:" + sessionObject.currentSession,
                 subTitle: "What would you like to do next?",
                 buttons: [{
-                    "text": "Work on a new list?",
+                    "text": "work on a new list?",
                     "value": "Load a list"
                 }, {
-                    "text": "Run through the items in this list one by one?",
+                    "text": "use this checklist",
                     "value": "Next Item on the list"
                 }]
             }]
@@ -291,7 +291,7 @@ function doEndList(event, callback) {
             title: "No active list!!",
             subTitle: "Would you want to start one?",
             buttons: [{
-                "text": "Start a new list?",
+                "text": "start a new list?",
                 "value": "Load a list"
             }]
         }]
@@ -333,10 +333,10 @@ function doNextItem(event, callback) {
                         title: "Running thru the list.." + sessionObject.currentSession,
                         subTitle: "Item: " + item,
                         buttons: [{
-                            "text": "Jump to next item?",
+                            "text": "next item..",
                             "value": "Next Item on the list"
                         }, {
-                            "text": "Load some other list?",
+                            "text": "use some other list?",
                             "value": "Load a list"
                         }]
                     }]
@@ -355,10 +355,10 @@ function doNextItem(event, callback) {
                         title: "What do we want to do next?",
                         subTitle: "You could ...",
                         buttons: [{
-                            "text": "Check again?",
+                            "text": "doubtful? check again",
                             "value": "Next Item on the list"
                         }, {
-                            "text": "Load some other list?",
+                            "text": "load some other list?",
                             "value": "Load a list"
                         }]
                     }]
@@ -469,10 +469,10 @@ function doLoadList(event, callback) {
                         title: "Working list:" + listToBeLoaded,
                         subTitle: "Items: " + items_in_list.join(),
                         buttons: [{
-                            "text": "Add more to the list?",
+                            "text": "add more things...",
                             "value": "Add a new item to the list"
                         }, {
-                            "text": "Run through this list one by one?",
+                            "text": "use this checklist",
                             "value": "Next Item on the list"
                         }]
                     }]
@@ -515,7 +515,7 @@ function doLoadList(event, callback) {
             title: "Working list:" + listToBeLoaded,
             subTitle: "No items in the list",
             buttons: [{
-                "text": "Add some?",
+                "text": "add some things",
                 "value": "Add a new item to the list"
             }]
         }]
@@ -526,38 +526,62 @@ function doLoadList(event, callback) {
 
 function doGreeting(event, callback) {
 
-    callback(null, closeWithResponse(event, false, event.sessionAttributes, 'Fulfilled', {
-        contentType: 'PlainText',
-        content: "Hello, my name is Alfred, \n" +
-            " I can help you with creating and maintaining task lists. \n" +
-            "Some of the commands that I understand are...\n" +
-            "What can you do for me\n" +
-            "Create a new list\n" +
-            "Add a new item to the list" +
-            "Save the list\n" +
-            "Run through a list\n" +
-            "Next item\n" +
-            "You can also use following shortcuts."
-    }, {
+    var newUser = "Hello, my name is Alfred, \n" +
+        " I can help you with creating and maintaining task lists. \n" +
+        "Some of the commands that I understand are...\n" +
+        "What can you do for me\n" +
+        "Create a new list\n" +
+        "Add a new item to the list\n" +
+        "Save the list\n" +
+        "Run through a list\n" +
+        "Next item\n" +
+        "You can also use following shortcuts.";
+    var existingUser = "Hi, welcome back.\n";
+
+
+    var existingUserOptions = {
         contentType: "application/vnd.amazonaws.card.generic",
         genericAttachments: [{
             title: "Shortcuts",
-            subTitle: "Let's get you started... ",
+            subTitle: "What do we want to do today? ",
             buttons: [{
-                "text": "Create a list",
+                "text": "create a list",
                 "value": "Create a new list"
-            }, {
-                "text": "Add a new item to the list",
-                "value": "Add a new item to the list"
-            }, {
-                "text": "Save the list",
-                "value": "Save the list"
             }, {
                 "text": "Run through a list",
                 "value": "Run through a list"
             }]
         }]
-    }));
+    };
+
+    var newUserOptions = {
+        contentType: "application/vnd.amazonaws.card.generic",
+        genericAttachments: [{
+            title: "Shortcuts",
+            subTitle: "Get started by creating... ",
+            buttons: [{
+                "text": "your first list",
+                "value": "Create a new list"
+            }, ]
+        }]
+    };
+
+    var message = newUser;
+    var options = newUserOptions;
+
+
+    if (event.sessionAttributes.sessionObject) {
+        message = existingUser;
+        options = existingUserOptions;
+    }
+
+
+
+
+    callback(null, closeWithResponse(event, false, event.sessionAttributes, 'Fulfilled', {
+        contentType: 'PlainText',
+        content: message
+    }, options));
 }
 
 // --------------- Main handler -----------------------

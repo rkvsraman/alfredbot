@@ -1,13 +1,7 @@
 BUCKET := alfredbot
 
 build:
-	rm alfredbot.zip && cd bot && yarn install && zip -r ../alfredbot.zip  index.js package.json template.yaml
-
-lint:
-	cd bot && yarn && npm run lint
-
-test:
-	cd functions/oscarbot && yarn && npm test
+	touch alfredbot.zip && rm alfredbot.zip && cd bot && yarn install && zip -r ../alfredbot.zip  index.js package.json template.yaml
 
 upload:
 	aws s3 cp alfredbot.zip s3://$(BUCKET)/functions/alfredbot.zip
