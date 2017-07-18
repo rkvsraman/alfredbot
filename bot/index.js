@@ -185,7 +185,7 @@ function doAddToList(event, callback) {
 
 function doCreateList(event, callback) {
 
-    if (event.invocationSource == "DialogCodeHook" && !event.currentIntent.slots.ListName) {
+    if (event.invocationSource == "DialogCodeHook" && !event.currentIntent.slots.SomeVal) {
 
         var buttonsList = [];
         if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
@@ -203,11 +203,11 @@ function doCreateList(event, callback) {
 
                 });
                 callback(null, elicitSlotWithResponse(event.sessionAttributes, event.currentIntent.name, {
-                        "ListName": null
+                        "SomeVal": null
                     },
-                    "ListName", {
+                    "SomeVal", {
                         contentType: 'PlainText',
-                        content: "We have following ...\n"+lists+"\nWhat should the new one be called?\n(One word please)"
+                        content: "We have following ...\n"+lists+"\nWhat should the new one be called?"
                     }, null
 
                 ));
@@ -219,11 +219,11 @@ function doCreateList(event, callback) {
         }
         else{
             callback(null, elicitSlotWithResponse(event.sessionAttributes, event.currentIntent.name, {
-                        "ListName": null
+                        "SomeVal": null
                     },
-                    "ListName", {
+                    "SomeVal", {
                         contentType: 'PlainText',
-                        content: "Yaay... creating the first one, what should it be called (one word please!!)?"
+                        content: "Yaay... creating the first one, what should it be called?"
                     }, null
 
                 ));
@@ -233,7 +233,7 @@ function doCreateList(event, callback) {
 
     }
     var items_in_list = [];
-    var listName = event.currentIntent.slots.ListName.toLowerCase();
+    var listName = event.currentIntent.slots.SomeVal;
     var sessionObject = {};
     if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
