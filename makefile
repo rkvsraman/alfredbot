@@ -22,10 +22,6 @@ update:
     --s3-bucket $(BUCKET) \
     --s3-key functions/alfredbot.zip
 
-release: deploy
-	VERSION=$$(aws lambda publish-version --region us-east-1 --function-name alfredbot | jq -r .Version); \
-	aws lambda update-alias --function-name alfredbot --region us-east-1 --function-version $$VERSION --name PROD
-
 deploy: build upload update
 
 setup: build upload create

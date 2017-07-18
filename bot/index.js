@@ -8,8 +8,7 @@ AWS.config.update({
 
 /**
  * This is a small bot which is a Google Keep  clone for chatbots on Slack and Facebook. You can create small lists
- * and go through them again and again in a conversational interactive interface. 
- 
+ * and go through them in a conversational interactive interface. 
  */
 
 
