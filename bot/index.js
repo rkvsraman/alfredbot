@@ -185,6 +185,53 @@ function doAddToList(event, callback) {
 
 function doCreateList(event, callback) {
 
+    if (event.invocationSource == "DialogCodeHook" && !event.currentIntent.slots.ListName) {
+
+        var buttonsList = [];
+        if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
+            sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
+            console.log('%j', sessionObject);
+            var lists = '';
+            if (sessionObject.lists) {
+                sessionObject.lists.forEach(function (element) {
+
+                    lists += element.name + "\n";
+                    var button = {};
+                    button.text = element.name;
+                    button.value = element.name;
+                    buttonsList.push(button);
+
+                });
+                callback(null, elicitSlotWithResponse(event.sessionAttributes, event.currentIntent.name, {
+                        "ListName": null
+                    },
+                    "ListName", {
+                        contentType: 'PlainText',
+                        content: "We have following ...\n"+lists+"\nWhat should the new one be called?\n(One word please)"
+                    }, null
+
+                ));
+
+
+            }
+
+
+        }
+        else{
+            callback(null, elicitSlotWithResponse(event.sessionAttributes, event.currentIntent.name, {
+                        "ListName": null
+                    },
+                    "ListName", {
+                        contentType: 'PlainText',
+                        content: "Yaay... creating the first one, what should it be called (one word please!!)?"
+                    }, null
+
+                ));
+        }
+
+        return;
+
+    }
     var items_in_list = [];
     var listName = event.currentIntent.slots.ListName.toLowerCase();
     var sessionObject = {};
@@ -394,9 +441,11 @@ function doLoadList(event, callback) {
         if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
             sessionObject = JSON.parse(event.sessionAttributes.sessionObject);
             console.log('%j', sessionObject);
+            var lists = '';
             if (sessionObject.lists) {
                 sessionObject.lists.forEach(function (element) {
 
+                    lists += element.name + "\n";
                     var button = {};
                     button.text = element.name;
                     button.value = element.name;
@@ -408,15 +457,8 @@ function doLoadList(event, callback) {
                     },
                     "EList", {
                         contentType: 'PlainText',
-                        content: "Listing existing lists..."
-                    }, {
-                        contentType: "application/vnd.amazonaws.card.generic",
-                        genericAttachments: [{
-                            title: "Available lists",
-                            subTitle: "Pick from...",
-                            buttons: buttonsList
-                        }]
-                    }
+                        content: "Pick from following ...\n"+lists
+                    }, null
 
                 ));
 
@@ -548,7 +590,7 @@ function doGreeting(event, callback) {
                 "text": "create a list",
                 "value": "Create a new list"
             }, {
-                "text": "Run through a list",
+                "text": "run through a list",
                 "value": "Run through a list"
             }]
         }]
@@ -570,7 +612,7 @@ function doGreeting(event, callback) {
     var options = newUserOptions;
 
 
-    if (event.sessionAttributes.sessionObject) {
+    if (event.sessionAttributes && event.sessionAttributes.sessionObject) {
         message = existingUser;
         options = existingUserOptions;
     }
