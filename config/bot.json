@@ -1,0 +1,319 @@
+{
+  "name": "AlfredBot",
+  "description": null,
+  "intents": [
+    {
+      "intentName": "CreateListIntent",
+      "intentVersion": "6"
+    },
+    {
+      "intentName": "EndList",
+      "intentVersion": "3"
+    },
+    {
+      "intentName": "LoadList",
+      "intentVersion": "7"
+    },
+    {
+      "intentName": "AddtoList",
+      "intentVersion": "10"
+    },
+    {
+      "intentName": "Hello",
+      "intentVersion": "2"
+    },
+    {
+      "intentName": "NextItemOnList",
+      "intentVersion": "1"
+    }
+  ],
+  "clarificationPrompt": {
+    "messages": [
+      {
+        "contentType": "PlainText",
+        "content": "Sorry, can you please repeat that?"
+      }
+    ],
+    "maxAttempts": 5,
+    "responseCard": null
+  },
+  "abortStatement": {
+    "messages": [
+      {
+        "contentType": "PlainText",
+        "content": "Sorry, I could not understand. Goodbye."
+      }
+    ],
+    "responseCard": null
+  },
+  "status": "READY",
+  "failureReason": null,
+  "lastUpdatedDate": "2017-07-18T08:55:18.656Z",
+  "createdDate": "2017-07-12T04:30:15.627Z",
+  "idleSessionTTLInSeconds": 180,
+  "voiceId": "Joey",
+  "checksum": "a6117213-72f9-41fe-abc2-21e61dea5663",
+  "version": "$LATEST",
+  "locale": "en-US",
+  "childDirected": false,
+  "dependencies": {
+    "intents": [
+      {
+        "name": "NextItemOnList",
+        "description": null,
+        "slots": [],
+        "sampleUtterances": [
+          "Next Item on the list",
+          "Next item",
+          "Check",
+          "Done"
+        ],
+        "fulfillmentActivity": {
+          "type": "CodeHook",
+          "codeHook": {
+            "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+            "messageVersion": "1.0"
+          }
+        },
+        "parentIntentSignature": null,
+        "lastUpdatedDate": "2017-07-17T07:01:45.451Z",
+        "createdDate": "2017-07-17T07:01:45.451Z",
+        "version": "1",
+        "checksum": "e5e4456c-571f-4b2d-a683-fa90d2128d45"
+      },
+      {
+        "name": "EndList",
+        "description": null,
+        "slots": [],
+        "sampleUtterances": [
+          "Keep the list",
+          "Save the list",
+          "Store the list"
+        ],
+        "fulfillmentActivity": {
+          "type": "CodeHook",
+          "codeHook": {
+            "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+            "messageVersion": "1.0"
+          }
+        },
+        "parentIntentSignature": null,
+        "lastUpdatedDate": "2017-07-17T07:01:45.224Z",
+        "createdDate": "2017-07-17T07:01:45.224Z",
+        "version": "3",
+        "checksum": "1f806938-3013-40dd-95e7-9b84a571d078"
+      },
+      {
+        "name": "AddtoList",
+        "description": null,
+        "slots": [
+          {
+            "name": "ListItem",
+            "description": null,
+            "slotConstraint": "Required",
+            "slotType": "ListItem",
+            "slotTypeVersion": "1",
+            "valueElicitationPrompt": {
+              "messages": [
+                {
+                  "contentType": "PlainText",
+                  "content": "Sure.. what is to be added to the list?"
+                }
+              ],
+              "maxAttempts": 2,
+              "responseCard": null
+            },
+            "priority": 2,
+            "sampleUtterances": [],
+            "responseCard": null
+          }
+        ],
+        "sampleUtterances": [
+          "Add a new item to the list",
+          "Add one more item to the list",
+          "Add this task to the list",
+          "Add one more task to the list",
+          "Add an activity to the list",
+          "Add one more activity to the list",
+          "Insert this item into the list"
+        ],
+        "fulfillmentActivity": {
+          "type": "CodeHook",
+          "codeHook": {
+            "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+            "messageVersion": "1.0"
+          }
+        },
+        "parentIntentSignature": null,
+        "lastUpdatedDate": "2017-07-17T07:01:45.635Z",
+        "createdDate": "2017-07-17T07:01:45.635Z",
+        "version": "10",
+        "checksum": "c4be3c03-91ce-4d25-88a4-40106c2e028e"
+      },
+      {
+        "name": "Hello",
+        "description": null,
+        "slots": [],
+        "sampleUtterances": [
+          "Hi",
+          "Hello",
+          "Hi Alfred",
+          "Hello Alfred",
+          "What can you do",
+          "What can you do for me"
+        ],
+        "fulfillmentActivity": {
+          "type": "CodeHook",
+          "codeHook": {
+            "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+            "messageVersion": "1.0"
+          }
+        },
+        "parentIntentSignature": null,
+        "lastUpdatedDate": "2017-07-17T10:49:45.361Z",
+        "createdDate": "2017-07-17T10:49:45.361Z",
+        "version": "2",
+        "checksum": "4f8fccd4-c5a9-4502-a005-7274d117330c"
+      },
+      {
+        "name": "LoadList",
+        "description": null,
+        "slots": [
+          {
+            "name": "EList",
+            "description": null,
+            "slotConstraint": "Required",
+            "slotType": "ExistingList",
+            "slotTypeVersion": "1",
+            "valueElicitationPrompt": {
+              "messages": [
+                {
+                  "contentType": "PlainText",
+                  "content": "Which list?"
+                }
+              ],
+              "maxAttempts": 2,
+              "responseCard": null
+            },
+            "priority": 1,
+            "sampleUtterances": [],
+            "responseCard": null
+          }
+        ],
+        "sampleUtterances": [
+          "Load a list ",
+          "Please load a list",
+          "Load a check list",
+          "Run through a list"
+        ],
+        "dialogCodeHook": {
+          "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+          "messageVersion": "1.0"
+        },
+        "fulfillmentActivity": {
+          "type": "CodeHook",
+          "codeHook": {
+            "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+            "messageVersion": "1.0"
+          }
+        },
+        "parentIntentSignature": null,
+        "lastUpdatedDate": "2017-07-17T13:11:25.696Z",
+        "createdDate": "2017-07-17T13:11:25.696Z",
+        "version": "7",
+        "checksum": "6edae418-78c7-425d-bbb4-fd11571f3de1"
+      },
+      {
+        "name": "CreateListIntent",
+        "description": null,
+        "slots": [
+          {
+            "name": "SomeVal",
+            "description": null,
+            "slotConstraint": "Required",
+            "slotType": "SomeVal",
+            "slotTypeVersion": "1",
+            "valueElicitationPrompt": {
+              "messages": [
+                {
+                  "contentType": "PlainText",
+                  "content": "What should we name the list"
+                }
+              ],
+              "maxAttempts": 2,
+              "responseCard": null
+            },
+            "priority": 1,
+            "sampleUtterances": [],
+            "responseCard": null
+          }
+        ],
+        "sampleUtterances": [
+          "Please create a list",
+          "Make a list",
+          "Make a new list",
+          "Create a list",
+          "Please make a list",
+          "Create a new list"
+        ],
+        "dialogCodeHook": {
+          "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+          "messageVersion": "1.0"
+        },
+        "fulfillmentActivity": {
+          "type": "CodeHook",
+          "codeHook": {
+            "uri": "arn:aws:lambda:us-east-1:680330217679:function:alfredbot",
+            "messageVersion": "1.0"
+          }
+        },
+        "parentIntentSignature": null,
+        "lastUpdatedDate": "2017-07-18T08:54:52.868Z",
+        "createdDate": "2017-07-18T08:54:52.868Z",
+        "version": "6",
+        "checksum": "81cb6f43-6681-4b86-98ea-c80b8ae56ac1"
+      }
+    ],
+    "slotTypes": [
+      {
+        "name": "ListItem",
+        "description": "What is the item?",
+        "enumerationValues": [
+          {
+            "value": "What item"
+          }
+        ],
+        "lastUpdatedDate": "2017-07-12T06:07:19.468Z",
+        "createdDate": "2017-07-12T06:07:19.468Z",
+        "version": "1",
+        "checksum": null
+      },
+      {
+        "name": "SomeVal",
+        "description": "SomeVal",
+        "enumerationValues": [
+          {
+            "value": "Value for the list"
+          }
+        ],
+        "lastUpdatedDate": "2017-07-18T08:54:33.689Z",
+        "createdDate": "2017-07-18T08:54:33.689Z",
+        "version": "1",
+        "checksum": null
+      },
+      {
+        "name": "ExistingList",
+        "description": "The existing lists",
+        "enumerationValues": [
+          {
+            "value": "What are the existing lists?"
+          }
+        ],
+        "lastUpdatedDate": "2017-07-12T05:43:41.180Z",
+        "createdDate": "2017-07-12T05:43:41.180Z",
+        "version": "1",
+        "checksum": null
+      }
+    ]
+  }
+}
